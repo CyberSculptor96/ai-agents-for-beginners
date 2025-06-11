@@ -1,0 +1,67 @@
+[
+    {
+        "role": "system",
+        "name": "TravelAgent",
+        "content": "Answer travel queries using the provided context. If context is provided, do not say 'I have no context for that.'"
+    },
+    {
+        "role": "user",
+        "content": "Can you explain Contoso's travel insurance coverage?"
+    },
+    {
+        "role": "function_call",
+        "function": "PromptPlugin.retrieve_context",
+        "arguments": {
+            "query": "Contoso's travel insurance coverage"
+        }
+    },
+    {
+        "role": "function_result",
+        "function": "PromptPlugin.retrieve_context",
+        "result": [
+            {
+                "document": "Contoso's travel insurance covers medical emergencies, trip cancellations, and lost baggage.",
+                "metadata": {"source": "training", "type": "explanation"}
+            },
+            {
+                "document": "Contoso Travel offers luxury vacation packages to exotic destinations worldwide.",
+                "metadata": {"source": "training", "type": "explanation"}
+            }
+        ]
+    },
+    {
+        "role": "assistant",
+        "content": "Contoso's travel insurance coverage includes protection for medical emergencies, trip cancellations, and lost baggage."
+    },
+    {
+        "role": "user",
+        "content": "What is the average temperature of the Maldives?"
+    },
+    {
+        "role": "function_call",
+        "function": "WeatherInfoPlugin.get_destination_temperature",
+        "arguments": {
+            "destination": "Maldives"
+        }
+    },
+    {
+        "role": "function_result",
+        "function": "WeatherInfoPlugin.get_destination_temperature",
+        "result": "The average temperature in Maldives is 82°F (28°C)."
+    },
+    {
+        "role": "assistant",
+        "content": "The average temperature in the Maldives is 82°F (28°C)."
+    },
+    {
+        "role": "user",
+        "content": "What is a good cold destination offered by Contoso and what is it average temperature?"
+    },
+    {
+        "role": "function_call",
+        "function": "PromptPlugin.retrieve_context",
+        "arguments": {
+            "query": "cold destination offered by Contoso"
+        }
+    }
+]
