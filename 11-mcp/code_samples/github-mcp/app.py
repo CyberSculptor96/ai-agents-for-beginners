@@ -10,7 +10,7 @@ from mcp import ClientSession
 
 from semantic_kernel.kernel import Kernel
 from azure.core.credentials import AzureKeyCredential
-
+from openai import AsyncOpenAI
 
 from semantic_kernel.functions import KernelFunction, kernel_function
 from semantic_kernel.contents import ChatHistory, AuthorRole, ChatMessageContent
@@ -18,7 +18,7 @@ from semantic_kernel.connectors.ai import FunctionChoiceBehavior
 from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
 from semantic_kernel.connectors.mcp import MCPStdioPlugin
-from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
+from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion, OpenAIChatCompletion
 from semantic_kernel.agents import ChatCompletionAgent, ChatHistoryAgentThread, AgentGroupChat
 from semantic_kernel.agents.strategies import (
     SequentialSelectionStrategy,
@@ -212,20 +212,22 @@ async def on_chat_start():
     service_id = "agent"
 
     # Create and add chat completion service
-    # chat_completion_service = OpenAIChatCompletion(
-    #     ai_model_id="gpt-4o-mini",
-    #     async_client=client,
-    #     service_id=service_id
-    # )
+    client = AsyncOpenAI(
+        api_key=os.environ.get("GITHUB_TOKEN"),
+        base_url="https://models.inference.ai.azure.com/"
+    )
+    chat_completion_service = OpenAIChatCompletion(
+        ai_model_id="gpt-4o-mini",
+        async_client=client,
+        service_id=service_id
+    )
 
     sk_filter = cl.SemanticKernelFilter(kernel=kernel)
 
-    kernel.add_service(AzureChatCompletion(service_id=service_id))
+    kernel.add_service(chat_completion_service)
     settings = kernel.get_prompt_execution_settings_from_service_id(
         service_id=service_id)
     settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
-
- 
 
     # Create a properly instantiated RAGPlugin
     rag_plugin = RAGPlugin(search_client)
@@ -341,20 +343,20 @@ If no relevant events are found, acknowledge this and suggest trying different s
 """
 
     github_agent = ChatCompletionAgent(
-        service=AzureChatCompletion(),
+        service=chat_completion_service,
         name="GithubAgent",
         instructions=GITHUB_INSTRUCTIONS,
         plugins=[github_plugin]
     )
 
     hackathon_agent = ChatCompletionAgent(
-        service=AzureChatCompletion(),
+        service=chat_completion_service,
         name="HackathonAgent",
         instructions=HACKATHON_AGENT
     )
 
     events_agent = ChatCompletionAgent(
-        service=AzureChatCompletion(),
+        service=chat_completion_service,
         name="EventsAgent",
         instructions=EVENTS_AGENT,
         plugins=[rag_plugin]  # Add the plugin here
@@ -374,7 +376,7 @@ If no relevant events are found, acknowledge this and suggest trying different s
     # Store in user session
     cl.user_session.set("kernel", kernel)
     cl.user_session.set("settings", settings)  # Store settings in session
-    cl.user_session.set("chat_completion_service", AzureChatCompletion())
+    cl.user_session.set("chat_completion_service", chat_completion_service)
     cl.user_session.set("chat_history", chat_history)
     cl.user_session.set("mcp_tools", {})
     # Store the agent group chat
